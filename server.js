@@ -241,18 +241,29 @@ app.post('/api/connect', (req, res) => {
             if (botClients.has(socketId) && botConfigs.has(socketId) && channelNames.has(socketId)) {
               const botClient = botClients.get(socketId);
               const channelName = channelNames.get(socketId);
+              const botConfig = botConfigs.get(socketId);
               
-              if (botClient && channelName) {
-                const botConfig = botConfigs.get(socketId);
+              console.log(`[Bot Check] socketId: ${socketId}, hasBotClient: ${!!botClient}, hasChannel: ${!!channelName}, hasConfig: ${!!botConfig}`);
+              
+              if (botClient && channelName && botConfig) {
                 const notificationMessage = (botConfig.participantMessage || '@{username} ✅ Bạn đã được thêm vào danh sách để roll quà! Chúc may mắn! 🎁')
-                  .replace('{username}', username);
+                  .replace(/{username}/g, username);
                 
-                botClient.say(channelName, notificationMessage).catch(err => {
-                  console.error('Error sending participant notification:', err);
+                // Thử gửi tin nhắn - tmi.js sẽ tự xử lý nếu chưa connected
+                botClient.say(channelName, notificationMessage).then(() => {
+                  console.log(`✅ Bot notification sent to ${username}: ${notificationMessage}`);
+                }).catch(err => {
+                  console.error(`❌ Error sending participant notification to ${username}:`, err.message || err);
+                  // Nếu lỗi do chưa connected, log thông tin debug
+                  if (err.message && err.message.includes('Not connected')) {
+                    console.warn(`⚠️ Bot client not connected yet. Bot username: ${botConfig.username}, Channel: ${channelName}`);
+                  }
                 });
-                
-                console.log(`Bot notification sent to ${username}: ${notificationMessage}`);
+              } else {
+                console.warn(`⚠️ Missing bot components - botClient: ${!!botClient}, channelName: ${!!channelName}, botConfig: ${!!botConfig}`);
               }
+            } else {
+              console.log(`ℹ️ Bot not configured - hasBotClient: ${botClients.has(socketId)}, hasConfig: ${botConfigs.has(socketId)}, hasChannel: ${channelNames.has(socketId)}`);
             }
             
             // Gửi thông báo participant mới

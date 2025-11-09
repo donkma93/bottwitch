@@ -285,7 +285,14 @@ socket.on('status', (data) => {
 
 // Giveaway Functions
 async function setKeyword() {
-    const keyword = keywordInput.value.trim();
+    // Lấy giá trị từ info-panel hoặc giveaway-panel (nếu có)
+    const keywordInputElement = keywordInputInfo || keywordInput;
+    if (!keywordInputElement) {
+        showStatus('Không tìm thấy input từ khóa!', 'error');
+        return;
+    }
+    
+    const keyword = keywordInputElement.value.trim();
     
     if (!keyword) {
         showStatus('Vui lòng nhập từ khóa!', 'error');
@@ -319,8 +326,11 @@ async function setKeyword() {
         const data = await response.json();
         
         currentKeyword = keyword;
-        keywordStatus.textContent = `Từ khóa đang hoạt động: "${keyword}"`;
-        keywordStatus.className = 'keyword-status show active';
+        const keywordStatusElement = keywordStatusInfo || keywordStatus;
+        if (keywordStatusElement) {
+            keywordStatusElement.textContent = `Từ khóa đang hoạt động: "${keyword}"`;
+            keywordStatusElement.className = 'keyword-status show active';
+        }
         // Lưu vào localStorage
         localStorage.setItem('giveaway_keyword', keyword);
         showStatus(data.message, 'success');
@@ -359,9 +369,13 @@ async function disableKeyword() {
         const data = await response.json();
         
         currentKeyword = '';
-        keywordInput.value = '';
-        keywordStatus.textContent = 'Giveaway đã tắt';
-        keywordStatus.className = 'keyword-status show inactive';
+        const keywordInputElement = keywordInputInfo || keywordInput;
+        if (keywordInputElement) keywordInputElement.value = '';
+        const keywordStatusElement = keywordStatusInfo || keywordStatus;
+        if (keywordStatusElement) {
+            keywordStatusElement.textContent = 'Giveaway đã tắt';
+            keywordStatusElement.className = 'keyword-status show inactive';
+        }
         showStatus(data.message, 'info');
     } catch (error) {
         console.error('Error disabling keyword:', error);
@@ -389,8 +403,11 @@ async function loadParticipants() {
     }
     
     if (savedKeyword) {
-        keywordInput.value = savedKeyword;
-        currentKeyword = savedKeyword;
+        const keywordInputElement = keywordInputInfo || keywordInput;
+        if (keywordInputElement) {
+            keywordInputElement.value = savedKeyword;
+            currentKeyword = savedKeyword;
+        }
     }
     
     if (!socket.id) {
@@ -435,12 +452,19 @@ async function loadParticipants() {
             currentKeyword = data.keyword;
             
             if (data.keyword) {
-                keywordStatus.textContent = `Từ khóa đang hoạt động: "${data.keyword}"`;
-                keywordStatus.className = 'keyword-status show active';
-                keywordInput.value = data.keyword;
+                const keywordStatusElement = keywordStatusInfo || keywordStatus;
+                if (keywordStatusElement) {
+                    keywordStatusElement.textContent = `Từ khóa đang hoạt động: "${data.keyword}"`;
+                    keywordStatusElement.className = 'keyword-status show active';
+                }
+                const keywordInputElement = keywordInputInfo || keywordInput;
+                if (keywordInputElement) keywordInputElement.value = data.keyword;
                 localStorage.setItem('giveaway_keyword', data.keyword);
             } else {
-                keywordStatus.className = 'keyword-status';
+                const keywordStatusElement = keywordStatusInfo || keywordStatus;
+                if (keywordStatusElement) {
+                    keywordStatusElement.className = 'keyword-status';
+                }
             }
             
             renderParticipants();
@@ -1189,7 +1213,14 @@ socket.on('winner-commented', (data) => {
 
 // Bot Config Functions
 async function setBotUsername() {
-    const username = botUsernameInput.value.trim();
+    // Lấy giá trị từ info-panel hoặc giveaway-panel (nếu có)
+    const botUsernameInputElement = botUsernameInputInfo || botUsernameInput;
+    if (!botUsernameInputElement) {
+        showStatus('Không tìm thấy input tên bot!', 'error');
+        return;
+    }
+    
+    const username = botUsernameInputElement.value.trim();
     
     if (!username) {
         showStatus('Vui lòng nhập tên bot!', 'error');
@@ -1226,7 +1257,14 @@ async function setBotUsername() {
 }
 
 async function setBotOAuth() {
-    const oauth = botOAuthInput.value.trim();
+    // Lấy giá trị từ info-panel hoặc giveaway-panel (nếu có)
+    const botOAuthInputElement = botOAuthInputInfo || botOAuthInput;
+    if (!botOAuthInputElement) {
+        showStatus('Không tìm thấy input OAuth token!', 'error');
+        return;
+    }
+    
+    const oauth = botOAuthInputElement.value.trim();
     
     if (!oauth) {
         showStatus('Vui lòng nhập OAuth token!', 'error');
@@ -1263,7 +1301,14 @@ async function setBotOAuth() {
 }
 
 async function setBotMessage() {
-    const message = botMessageInput.value.trim();
+    // Lấy giá trị từ info-panel hoặc giveaway-panel (nếu có)
+    const botMessageInputElement = botMessageInputInfo || botMessageInput;
+    if (!botMessageInputElement) {
+        showStatus('Không tìm thấy input tin nhắn bot!', 'error');
+        return;
+    }
+    
+    const message = botMessageInputElement.value.trim();
     
     if (!message) {
         showStatus('Vui lòng nhập tin nhắn!', 'error');
@@ -1300,7 +1345,14 @@ async function setBotMessage() {
 }
 
 async function setBotParticipantMessage() {
-    const message = botParticipantMessageInput.value.trim();
+    // Lấy giá trị từ info-panel hoặc giveaway-panel (nếu có)
+    const botParticipantMessageInputElement = botParticipantMessageInputInfo || botParticipantMessageInput;
+    if (!botParticipantMessageInputElement) {
+        showStatus('Không tìm thấy input tin nhắn điểm danh!', 'error');
+        return;
+    }
+    
+    const message = botParticipantMessageInputElement.value.trim();
     
     if (!message) {
         showStatus('Vui lòng nhập tin nhắn!', 'error');
@@ -1346,9 +1398,14 @@ async function loadBotConfig() {
         if (response.ok) {
             const data = await response.json();
             if (data.success && data.config) {
-                botUsernameInput.value = data.config.username || '';
-                botMessageInput.value = data.config.message || '🎉 {winner} đã chiến thắng giveaway! Bạn có 30s để comment vào giveaway để nhận quà!';
-                botParticipantMessageInput.value = data.config.participantMessage || '@{username} ✅ Bạn đã được thêm vào danh sách để roll quà! Chúc may mắn! 🎁';
+                const botUsernameInputElement = botUsernameInputInfo || botUsernameInput;
+                if (botUsernameInputElement) botUsernameInputElement.value = data.config.username || '';
+                
+                const botMessageInputElement = botMessageInputInfo || botMessageInput;
+                if (botMessageInputElement) botMessageInputElement.value = data.config.message || '🎉 {winner} đã chiến thắng giveaway! Bạn có 30s để comment vào giveaway để nhận quà!';
+                
+                const botParticipantMessageInputElement = botParticipantMessageInputInfo || botParticipantMessageInput;
+                if (botParticipantMessageInputElement) botParticipantMessageInputElement.value = data.config.participantMessage || '@{username} ✅ Bạn đã được thêm vào danh sách để roll quà! Chúc may mắn! 🎁';
                 // Không hiển thị OAuth token vì lý do bảo mật
             }
         }
@@ -2024,17 +2081,21 @@ function syncInputs() {
 // Info Panel Event Listeners
 if (setKeywordBtnInfo) {
     setKeywordBtnInfo.addEventListener('click', () => {
-        if (keywordInputInfo) keywordInput.value = keywordInputInfo.value;
+        if (keywordInputInfo && keywordInput) keywordInput.value = keywordInputInfo.value;
         setKeyword();
-        if (keywordStatusInfo) keywordStatusInfo.textContent = keywordStatus.textContent;
-        if (keywordStatusInfo) keywordStatusInfo.className = keywordStatus.className;
+        if (keywordStatusInfo && keywordStatus) {
+            keywordStatusInfo.textContent = keywordStatus.textContent;
+            keywordStatusInfo.className = keywordStatus.className;
+        }
     });
 }
 if (disableKeywordBtnInfo) {
     disableKeywordBtnInfo.addEventListener('click', () => {
         disableKeyword();
-        if (keywordStatusInfo) keywordStatusInfo.textContent = keywordStatus.textContent;
-        if (keywordStatusInfo) keywordStatusInfo.className = keywordStatus.className;
+        if (keywordStatusInfo && keywordStatus) {
+            keywordStatusInfo.textContent = keywordStatus.textContent;
+            keywordStatusInfo.className = keywordStatus.className;
+        }
     });
 }
 if (setBotBtnInfo) {
