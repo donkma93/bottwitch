@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitch Giveaway System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Language Selection Screen -->
+    <div id="languageScreen" class="language-screen">
+        <div class="language-content">
+            <h1 data-i18n="title">🎁 Twitch Giveaway System</h1>
+            <p class="subtitle" data-i18n="subtitle">Hệ thống quản lý giveaway với bot tự động</p>
+            
+            <div class="language-selector">
+                <h2>Chọn ngôn ngữ / Select Language / Selecionar Idioma / Seleccionar Idioma</h2>
+                <div class="language-buttons">
+                    <button class="lang-btn" data-lang="vi" onclick="setLanguage('vi')">
+                        <span class="flag">🇻🇳</span>
+                        <span>Tiếng Việt</span>
+                    </button>
+                    <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">
+                        <span class="flag">🇺🇸</span>
+                        <span>English</span>
+                    </button>
+                    <button class="lang-btn" data-lang="pt" onclick="setLanguage('pt')">
+                        <span class="flag">🇵🇹</span>
+                        <span>Português</span>
+                    </button>
+                    <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">
+                        <span class="flag">🇪🇸</span>
+                        <span>Español</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="channel-input-section">
+                <div class="input-group">
+                    <label for="channelInputInitial" data-i18n="channelInputLabel">Tên kênh Twitch:</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="channelInputInitial" 
+                            data-i18n="channelInputPlaceholder"
+                            placeholder="Nhập tên kênh (ví dụ: xqcow, pokimane)"
+                            autocomplete="off"
+                        >
+                        <button id="connectInitialBtn" class="btn btn-primary" data-i18n="connectBtn">Kết nối</button>
+                    </div>
+                </div>
+                <div id="statusInitial" class="status-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application (hidden until connected) -->
+    <div id="mainApp" class="container" style="display: none;">
+        <header>
+            <div class="header-top">
+                <div>
+                    <h1 data-i18n="title">🎁 Twitch Giveaway System</h1>
+                    <p class="subtitle" data-i18n="subtitle">Hệ thống quản lý giveaway với bot tự động</p>
+                </div>
+                <div class="language-switcher">
+                    <select id="languageSelect" class="language-select">
+                        <option value="vi">🇻🇳 Tiếng Việt</option>
+                        <option value="en">🇺🇸 English</option>
+                        <option value="pt">🇵🇹 Português</option>
+                        <option value="es">🇪🇸 Español</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <div class="control-panel">
+            <div class="input-group">
+                <label for="channelInput" data-i18n="channelInputLabel">Tên kênh Twitch:</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="channelInput" 
+                        data-i18n="channelInputPlaceholder"
+                        placeholder="Nhập tên kênh (ví dụ: xqcow, pokimane)"
+                        autocomplete="off"
+                    >
+                    <button id="connectBtn" class="btn btn-primary" data-i18n="connectBtn">Kết nối</button>
+                    <button id="disconnectBtn" class="btn btn-secondary" data-i18n="disconnectBtn" disabled>Ngắt kết nối</button>
+                </div>
+            </div>
+            <div id="status" class="status-message"></div>
+        </div>
+
+        <div class="main-content">
+            <!-- Awards Panel - Danh sách phần thưởng (bên trái) -->
+            <div class="awards-panel">
+                <div class="awards-header">
+                    <h2 data-i18n="awardsTitle">🏆 Danh Sách Phần Thưởng</h2>
+                    <button id="refreshAwardsBtn" class="btn btn-small" style="background: #17a2b8; color: white;" data-i18n="refreshAwardsBtn">🔄 Làm mới</button>
+                </div>
+                <div id="awardsList" class="awards-list">
+                    <div style="text-align: center; color: #6c757d; padding: 40px;">
+                        <p data-i18n="awardsInstructions">Nhập DV Login và API Key, sau đó click "🔄 Làm mới" để xem danh sách phần thưởng</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Participants Panel - Danh sách người tham gia (ở giữa) -->
+            <div class="participants-panel">
+                <div class="participants-header">
+                    <h3><span data-i18n="participantsTitle">Danh sách tham gia</span> (<span id="participantCount">0</span>)</h3>
+                    <div class="participants-actions">
+                        <button id="rollBtn" class="btn btn-small btn-roll" data-i18n="rollBtn">🎲 Roll</button>
+                        <button id="exportBtn" class="btn btn-small btn-export" data-i18n="exportBtn">Xuất danh sách</button>
+                        <button id="clearParticipantsBtn" class="btn btn-small btn-danger" data-i18n="clearBtn">Xóa danh sách</button>
+                    </div>
+                </div>
+                <div id="participantsList" class="participants-list"></div>
+            </div>
+
+            <!-- Chat Sidebar - Bên phải -->
+            <div class="chat-sidebar">
+                <div class="chat-header">
+                    <h2 id="channelName" data-i18n="chatTitle">Chat</h2>
+                    <div class="chat-stats">
+                        <span id="messageCount">0</span>
+                        <button id="toggleChatBtn" class="btn btn-small btn-toggle" data-i18n="hideChatBtn">Ẩn</button>
+                        <button id="clearBtn" class="btn btn-small" data-i18n="clearChatBtn">Xóa</button>
+                    </div>
+                </div>
+                <div id="chatContainer" class="chat-container-wrapper">
+                    <div id="chatMessages" class="chat-messages"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <!-- Cột 1: Cài đặt từ khóa và bot -->
+            <div class="info-column">
+                <h3 class="column-title" data-i18n="keywordAndBotTitle">⚙️ Cài đặt Từ khóa & Bot</h3>
+                
+                <div class="input-group">
+                    <label for="keywordInputInfo" data-i18n="keywordLabel">Từ khóa giveaway:</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="keywordInputInfo" 
+                            data-i18n="keywordPlaceholder"
+                            placeholder="Nhập từ khóa (ví dụ: !join, giveaway)"
+                            autocomplete="off"
+                        >
+                        <button id="setKeywordBtnInfo" class="btn btn-primary" data-i18n="setKeywordBtn">Cài đặt</button>
+                        <button id="disableKeywordBtnInfo" class="btn btn-secondary" data-i18n="disableKeywordBtn">Tắt</button>
+                    </div>
+                    <div id="keywordStatusInfo" class="keyword-status"></div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="botUsernameInputInfo" data-i18n="botUsernameLabel">Bot Username (để gửi thông báo):</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="botUsernameInputInfo" 
+                            data-i18n="botUsernamePlaceholder"
+                            placeholder="Tên bot Twitch"
+                            autocomplete="off"
+                        >
+                        <button id="setBotBtnInfo" class="btn btn-primary" data-i18n="saveBtn">Lưu</button>
+                    </div>
+                    <div id="botStatusInfo" class="bot-status"></div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="botOAuthInputInfo" data-i18n="botOAuthLabel">Bot OAuth Token:</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="botOAuthInputInfo" 
+                            data-i18n="botOAuthPlaceholder"
+                            placeholder="oauth:xxxxx (từ https://twitchtokengenerator.com)"
+                            autocomplete="off"
+                        >
+                        <button id="setBotOAuthBtnInfo" class="btn btn-primary" data-i18n="saveBtn">Lưu</button>
+                    </div>
+                    <small style="color: #6c757d; font-size: 0.85em; margin-top: 5px; display: block;">
+                        <span data-i18n="botOAuthLink">Lấy token tại:</span> <a href="https://twitchtokengenerator.com" target="_blank">twitchtokengenerator.com</a>
+                    </small>
+                </div>
+                
+                <div class="input-group">
+                    <label for="botMessageInputInfo" data-i18n="botMessageLabel">Tin nhắn khi roll (người chiến thắng):</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="botMessageInputInfo" 
+                            data-i18n="botMessagePlaceholder"
+                            placeholder="🎉 {winner} đã chiến thắng giveaway! Bạn có 30s để comment vào giveaway để nhận quà!"
+                            autocomplete="off"
+                        >
+                        <button id="setBotMessageBtnInfo" class="btn btn-primary" data-i18n="saveBtn">Lưu</button>
+                    </div>
+                    <small style="color: #6c757d; font-size: 0.85em; margin-top: 5px; display: block;" data-i18n="botMessageHint">
+                        Sử dụng {winner} để thay thế tên người chiến thắng
+                    </small>
+                </div>
+                
+                <div class="input-group">
+                    <label for="botParticipantMessageInputInfo" data-i18n="botParticipantMessageLabel">Tin nhắn khi điểm danh:</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="botParticipantMessageInputInfo" 
+                            data-i18n="botParticipantMessagePlaceholder"
+                            placeholder="@{username} ✅ Bạn đã được thêm vào danh sách để roll quà! Chúc may mắn! 🎁"
+                            autocomplete="off"
+                        >
+                        <button id="setBotParticipantMessageBtnInfo" class="btn btn-primary" data-i18n="saveBtn">Lưu</button>
+                    </div>
+                    <small style="color: #6c757d; font-size: 0.85em; margin-top: 5px; display: block;" data-i18n="botParticipantMessageHint">
+                        Sử dụng {username} để thay thế tên người điểm danh
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Cột 2: Cài đặt DV và API Key -->
+            <div class="info-column">
+                <h3 class="column-title" data-i18n="gameAPITitle">🎮 Game API Integration</h3>
+                
+                <div class="input-group">
+                    <label for="gameDvInputInfo" data-i18n="gameDvLabel">DV Login:</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="gameDvInputInfo" 
+                            data-i18n="gameDvPlaceholder"
+                            placeholder="DV login"
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="gameKeyInputInfo" data-i18n="gameKeyLabel">API Key:</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="gameKeyInputInfo" 
+                            data-i18n="gameKeyPlaceholder"
+                            placeholder="API key"
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+                
+                <div class="game-api-actions" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 15px;">
+                    <button id="getBalanceBtnInfo" class="btn btn-small" style="background: #17a2b8; color: white;" data-i18n="getBalanceBtn">💰 Get Balance</button>
+                    <button id="getLastDonateBtnInfo" class="btn btn-small" style="background: #17a2b8; color: white;" data-i18n="getLastDonateBtn">📝 Last Donate</button>
+                    <button id="getAwardsBtnInfo" class="btn btn-small" style="background: #17a2b8; color: white;" data-i18n="getAwardsBtn">🏆 Get Awards</button>
+                </div>
+                
+                <div id="gameApiResultInfo" class="game-api-result" style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef; display: none; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px;"></div>
+            </div>
+            
+            <!-- Cột 3: Gửi phần thưởng -->
+            <div class="info-column">
+                <h3 class="column-title" data-i18n="sendRewardLabel">🎁 Gửi Phần Thưởng</h3>
+                
+                <div class="input-group">
+                    <label data-i18n="rewardTypeLabel">Loại phần thưởng:</label>
+                    <div class="input-wrapper">
+                        <select id="gameRewardTypeInfo" style="padding: 8px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; background: #2a2a3e; color: #e0e0e0; width: 100%;">
+                            <option value="sendmcoins">MCoins</option>
+                            <option value="sendmpoints">MPoints</option>
+                            <option value="sendmegavip">MEGAVIP</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="gameRewardValueInfo" data-i18n="rewardValueLabel">Số lượng:</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="gameRewardValueInfo" 
+                            data-i18n="rewardValueLabel"
+                            placeholder="Số lượng"
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="gameRewardPlayerInfo" data-i18n="rewardPlayerLabel">Tên nhân vật:</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="gameRewardPlayerInfo" 
+                            data-i18n="rewardPlayerLabel"
+                            placeholder="Tên nhân vật"
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="gameRewardDescInfo" data-i18n="rewardDescLabel">Mô tả (tối đa 15 ký tự):</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="gameRewardDescInfo" 
+                            data-i18n="rewardDescLabel"
+                            placeholder="Mô tả (tối đa 15 ký tự)"
+                            maxlength="15"
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <button id="sendRewardBtnInfo" class="btn btn-primary" style="width: 100%;" data-i18n="sendRewardBtn">Gửi phần thưởng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Winner Popup -->
+    <div id="winnerPopup" class="winner-popup">
+        <div class="winner-popup-content">
+            <div class="winner-header">
+                <h2 data-i18n="winnerTitle">🎉 Người Chiến Thắng 🎉</h2>
+                <button id="closeWinnerPopupBtn" class="btn-close">&times;</button>
+            </div>
+            <div class="winner-name">
+                <span id="winnerName">-</span>
+            </div>
+            <div class="countdown-section">
+                <p data-i18n="waitingComment">Đang chờ comment trong:</p>
+                <div id="countdown" class="countdown">30</div>
+                <p class="countdown-label" data-i18n="seconds">giây</p>
+            </div>
+            <div class="winner-messages-section">
+                <h3 data-i18n="winnerMessagesTitle">Tin nhắn từ người chiến thắng:</h3>
+                <div id="winnerMessages" class="winner-messages"></div>
+            </div>
+            <div class="winner-actions">
+                <button id="rollAgainBtn" class="btn btn-primary btn-roll-again" data-i18n="rollAgainBtn">🎲 Roll Tiếp</button>
+                <button id="closeWinnerBtn" class="btn btn-secondary" data-i18n="closeBtn">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="i18n.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+
