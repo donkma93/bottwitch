@@ -349,7 +349,21 @@
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <!-- Socket.IO - Load from CDN for GitHub Pages, or from server for local dev -->
+    <script>
+        // Try to load from same origin first (for local development)
+        // If fails, load from CDN (for GitHub Pages)
+        const socketIoSrc = document.createElement('script');
+        socketIoSrc.src = '/socket.io/socket.io.js';
+        socketIoSrc.onerror = function() {
+            // Fallback to CDN if server doesn't provide socket.io
+            const cdnScript = document.createElement('script');
+            cdnScript.src = 'https://cdn.socket.io/4.6.1/socket.io.min.js';
+            document.head.appendChild(cdnScript);
+        };
+        document.head.appendChild(socketIoSrc);
+    </script>
+    <script src="config.js"></script>
     <script src="i18n.js"></script>
     <script src="app.js"></script>
 </body>

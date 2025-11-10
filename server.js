@@ -6,11 +6,43 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' 
+      ? ['https://YOUR_USERNAME.github.io'] // Thay bằng domain GitHub Pages của bạn
+      : '*', // Cho phép tất cả trong development
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// CORS middleware - cho phép GitHub Pages kết nối
+app.use((req, res, next) => {
+  // Cho phép tất cả origins trong development
+  // Trong production, thay bằng domain cụ thể của bạn
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://localhost:3000',
+    // Thêm domain GitHub Pages của bạn ở đây (ví dụ: 'https://YOUR_USERNAME.github.io')
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin) || !origin || process.env.NODE_ENV !== 'production') {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, socket-id');
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // Logging middleware để debug
 app.use((req, res, next) => {

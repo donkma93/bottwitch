@@ -1,5 +1,12 @@
 // Kết nối với Socket.IO
-const socket = io();
+// Load config nếu có
+let socket;
+if (typeof CONFIG !== 'undefined' && CONFIG.BACKEND_URL) {
+    socket = io(CONFIG.BACKEND_URL, CONFIG.SOCKET_OPTIONS || {});
+} else {
+    // Local development - same origin
+    socket = io();
+}
 
 // Language Screen Elements
 const languageScreen = document.getElementById('languageScreen');
