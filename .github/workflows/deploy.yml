@@ -3,7 +3,7 @@ name: Deploy Nodejs Project
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build:
