@@ -16,7 +16,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Build App
-        run: npm run build -- --base=/bottwitch/
+        run: node server.js -- --base=/bottwitch/
       - name: Archive artifact
         shell: sh
         run: |
